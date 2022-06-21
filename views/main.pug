@@ -1,0 +1,15 @@
+extends szablon.pug  
+
+block content
+  #trips
+    each t, i in wycieczki
+      article.trip
+        a(href='/trip/' + i)
+            img(src=t.zdjecie alt='Zdjęcie ' + i)
+        .trip-description
+            a(href='/trip/' + i)
+                h1= t.tytul
+            span.description= t.opis
+            .trip-price
+            span.price= "Cena:" + t.cena 
+            a(href='/book/' + i) Zarezerwuj

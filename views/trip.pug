@@ -1,0 +1,26 @@
+extends szablon.pug 
+
+block content
+  - var trip=wycieczki[id]
+  - var komunikat=komunikat
+  if komunikat == true
+    div(style={background: 'green', color: 'white', widht: '800px', height: '50px'}) 
+      h1 Transakcja zakończyła się powodzeniem
+  if 0 <= id && id < wycieczki.length
+    div(style={display:'block'})
+      section#trip_description
+        img(src=trip.zdjecie alt='Zdjęcie szczytu')
+        h1=trip.tytul
+        p=trip.opis
+        h2 Nag&lstrok;owek z tytu&lstrok;em
+        p
+          | Tu kolejny fragment tekstu. Mo&zdot;e si&eogon; z sk&lstrok;ada&cacute; z kilku akapit&oacute;w.
+        h2 Jeszcze jeden nag&lstrok;&oacute;wek
+        p
+          | I kolejne informacje o wycieczce. Trzeba si&eogon; wysili&cacute; i wymy&sacute;li&cacute; w&lstrok;asne.
+        h2 Istotne informacje
+      section#links
+        a(href='/') Powr&oacute;t
+        a(href='/book/' + id) Zarezerwuj
+  else
+    h2 Nie ma takiej wycieczki

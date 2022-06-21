@@ -1,0 +1,12 @@
+extends szablon.pug
+
+
+block content
+  section#trip_informations
+      h2 Wyloguj 
+        form(method='post')
+          if komunikat.length > 0
+            div(style={weight: '800px', height: '50px', background:'green', color:'white'})
+              h1= komunikat
+          button(type='submit') WYLOGUJ
+  

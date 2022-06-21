@@ -1,0 +1,29 @@
+html
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1.0')
+    title Wycieczka
+    link(rel='icon' type='image/x-icon' href='images/favicon.ico')
+    style 
+      include ../css/style.css
+      include ../css/trip.css
+      include ../css/main.css
+      include ../css/book.css
+  header
+    a(href='/')
+      img(src='/images/logo.png' alt='Logo biura podróży')
+    - var menu = {"/": "Strona Główna", "/trip/0": "Wycieczka", "/book/0": "Rezerwacja", "/login/": "Logowanie", "/mainuser/": "Lista rezerwzcji", "/logout/": "Wyloguj", "/register/": "Rejestracja"}
+      each n, i in menu
+        if location.substring(0, location.lastIndexOf('/')) == i.substring(0, i.lastIndexOf('/'))
+          a(href=i style={color:'red'})= n
+        else
+          a(href=i)= n
+  main
+    block content
+
+  footer
+    span Biuro podrozy, 2022
+    a(href='') O firmie
+    a(href='') Kontakt
+    a(href='') Polityka prywatnosci
+  

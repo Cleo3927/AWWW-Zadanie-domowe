@@ -1,0 +1,10 @@
+[
+    {"id": 0, "tytul": "Wspaniala wycieczka 1", "cena": 1200, "opis":"wspaniała wycieczka", "informacje":["zabrac rzeczy", "zabrac namiot"], "plan":["spacer", "plywanie", "jazda na rowerze"], "zdjecie":"/images/trips/szczyt.jpg"}, 
+    {"id": 1, "tytul": "Wspaniala wycieczka 2", "cena": 1201, "opis":"wspaniała wycieczka", "informacje":["zabrac rzeczy", "zabrac namiot"], "plan":["spacer", "plywanie", "jazda na rowerze"], "zdjecie":"/images/trips/morze.jpg"}, 
+    {"id": 2, "tytul": "Wspaniala wycieczka 3", "cena": 1202, "opis":"wspaniała wycieczka", "informacje":["zabrac rzeczy", "zabrac namiot"], "plan":["spacer", "plywanie", "jazda na rowerze"], "zdjecie":"/images/trips/miasto.jpg"}, 
+    {"id": 3, "tytul": "Wspaniala wycieczka 4", "cena": 1203, "opis":"wspaniała wycieczka", "informacje":["zabrac rzeczy", "zabrac namiot"], "plan":["spacer", "plywanie", "jazda na rowerze"], "zdjecie":"/images/trips/szczyt.jpg"}, 
+    {"id": 4, "tytul": "Wspaniala wycieczka 5", "cena": 1204, "opis":"wspaniała wycieczka", "informacje":["zabrac rzeczy", "zabrac namiot"], "plan":["spacer", "plywanie", "jazda na rowerze"], "zdjecie":"/images/trips/miasto.jpg"}, 
+    {"id": 5, "tytul": "Wspaniala wycieczka 6", "cena": 1205, "opis":"wspaniała wycieczka", "informacje":["zabrac rzeczy", "zabrac namiot"], "plan":["spacer", "plywanie", "jazda na rowerze"], "zdjecie":"/images/trips/szczyt.jpg"}, 
+    {"id": 6, "tytul": "Wspaniala wycieczka 7", "cena": 1206, "opis":"wspaniała wycieczka", "informacje":["zabrac rzeczy", "zabrac namiot"], "plan":["spacer", "plywanie", "jazda na rowerze"], "zdjecie":"/images/trips/morze.jpg"}, 
+    {"id": 7, "tytul": "Wspaniala wycieczka 8", "cena": 1207, "opis":"wspaniała wycieczka", "informacje":["zabrac rzeczy", "zabrac namiot"], "plan":["spacer", "plywanie", "jazda na rowerze"], "zdjecie":"/images/trips/miasto.jpg"} 
+]

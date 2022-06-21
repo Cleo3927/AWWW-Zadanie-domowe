@@ -1,0 +1,13 @@
+extends szablon.pug  
+
+block content
+  #trips
+    if wycieczki.length == 0
+      h1 brak rezerwacji
+
+    each t, i in wycieczki
+      article.trip
+        .trip-description
+            h1= "rezerwacja nr " + i + " na wycieczkę " + t.tytul
+            p= "Rezerwujący: " + t.imie + " " + t.nazwisko 
+            p= "Miejsca: " + t.ilosc

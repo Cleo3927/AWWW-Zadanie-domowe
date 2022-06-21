@@ -1,0 +1,35 @@
+{
+  "name": "pkg",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.mjs",
+  "scripts": {
+    "test": "node --trace-deprecation ./node_modules/mocha/bin/mocha --exit --timeout 5000",
+    "start": "nodemon app.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  },
+  "dependencies": {
+    "0g": "^0.0.6",
+    "bcrypt": "^5.0.1",
+    "body-parser": "^1.20.0",
+    "chai": "^4.3.6",
+    "chai-http": "^4.3.0",
+    "chromedriver": "^102.0.0",
+    "ejs": "^3.1.7",
+    "express": "^4.17.3",
+    "express-session": "^1.17.3",
+    "mocha": "^10.0.0",
+    "mocha-webdriver": "^0.2.9",
+    "pug": "^3.0.2",
+    "selenium": "^2.20.0",
+    "selenium-webdriver": "^4.2.0",
+    "sequelize": "^6.20.1",
+    "sqlite": "^4.1.1",
+    "sqlite3": "^5.0.8",
+    "test": "^3.0.1"
+  }
+}

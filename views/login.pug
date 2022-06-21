@@ -1,0 +1,19 @@
+extends szablon.pug
+
+
+block content
+  section#trip_informations
+      h2 Logowanie 
+      section#form
+        if komunikat.length > 0
+          if komunikat == "Poprawne logowanie"
+            div(style={weight: '800px', height: '50px', background:'green', color:'white'})
+              h1= komunikat
+          else 
+            div(style={weight: '800px', height: '50px', background:'red', color:'white'})
+              h1= komunikat
+        form(method='post')
+          input#email(type='email' placeholder='Adres e-mail' name='email' required='')
+          input#pass(type='password' placeholder='Hasło' name='pass' minlength="8" required='')
+          button(type='submit') ZALOGUJ
+  

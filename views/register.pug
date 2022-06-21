@@ -1,0 +1,23 @@
+extends szablon.pug
+
+
+block content
+  section#trip_informations
+      h2 Rejestracja 
+      section#form
+        if komunikat.length > 0
+          if komunikat == "Udało się zarejestrować"
+            div(style={weight: '800px', height: '50px', background:'green', color:'white'})
+              h1= komunikat
+          else 
+            div(style={weight: '800px', height: '50px', background:'red', color:'white'})
+              h1= komunikat
+
+        form(method='post')
+          input#first_name(type='text' placeholder='Imię' name='first_name' maxlength='40' required='')
+          input#last_name(type='text' placeholder='Nazwisko' name='last_name' maxlength='40' required='')
+          input#email(type='email' placeholder='Adres e-mail' name='email' required='')
+          input#pass(type='password' placeholder='Hasło' name='pass' minlength="8" required='')
+          input#confpass(type='password' placeholder='Powtórz hasło' name='confpass' minlength="8" required='')
+          button(type='submit') ZAREJESTRUJ 
+  
