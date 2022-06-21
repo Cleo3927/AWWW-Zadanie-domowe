@@ -40,7 +40,7 @@ async function check_title(driver) {
 // testy
 
 describe("Testy frontend", async () => {
-    get_db_postgres((db) => {
+    get_db_sqlite((db) => {
         async function add() {
             add_trips(db);  
         };
