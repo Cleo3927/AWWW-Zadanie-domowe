@@ -30,6 +30,6 @@ jobs:
     - uses: webfactory/ssh-agent@v0.5.4
       with:
         ssh-private-key: ${{ secrets.BAZA_DANYCH }}
-    - run: ssh -L 2022:lkdb:5432 jd429182@students.mimuw.edu.pl
+    - run: ssh -L 2022:lkdb:5432 jd429182@students.mimuw.edu.pl &
     - run: npm run build --if-present
     - run: npm test
