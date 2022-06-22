@@ -26,13 +26,13 @@ jobs:
       with:
         cache: 'npm'
     - run: npm ci
-    - name: Checkout
-      uses: actions/checkout@v2
-      
-    - name: Setup tunnel
-      uses: joshlarsen/ssh-tunnel-action@main
+    - name: executing remote ssh commands using ssh key
+      uses: appleboy/ssh-action@master
       with:
-        timeout: 1h
-        ssh_public_key: ${{ secrets.BAZA_DANYCH }}
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.BAZA_DANYCH}}
+        port: 2022
+        script: whoami
     - run: npm run build --if-present
     - run: npm test
