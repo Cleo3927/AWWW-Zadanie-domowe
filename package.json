@@ -4,7 +4,7 @@
   "description": "",
   "main": "app.mjs",
   "scripts": {
-    "test": "node --trace-deprecation ./node_modules/mocha/bin/mocha --exit --timeout 5000",
+    "test": "node --trace-deprecation ./node_modules/mocha/bin/mocha --exit --timeout 7000",
     "start": "nodemon app.mjs"
   },
   "author": "",
