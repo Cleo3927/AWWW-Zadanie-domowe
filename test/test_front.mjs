@@ -1,6 +1,7 @@
 import { equal } from "assert";
 import { start_server } from "../app.mjs";
 import { Builder, By, Capabilities } from "selenium-webdriver";
+import firefox from 'selenium-webdriver/firefox.js';
 import { get_db_sqlite } from '../database/database.mjs';
 import { add_trips } from '../database/init_db.mjs';
 import { check_book_errors, check_header, check_login_error, check_register_communicate, check_title, check_user_reservation } from './tests_functions.mjs';
@@ -25,7 +26,11 @@ const not_enough_places = 'Brak miejsc';
 describe("Testy frontend", async () => {
 
     const TIMEOUT = 10000;
-    const driver = new Builder().withCapabilities(Capabilities.firefox()).build();
+    const driver = new Builder().withCapabilities(Capabilities.firefox())
+        .setFirefoxOptions(new firefox.Options().headless().windowSize({
+          width: 1920,
+          height: 1080,
+        })).build();
     const website = 'http://localhost:2000';
     let db;
     let app;

@@ -1,6 +1,7 @@
 import { equal } from "assert";
 import { start_server } from "../app.mjs";
 import { Builder, By, Capabilities } from "selenium-webdriver";
+import firefox from 'selenium-webdriver/firefox.js';
 import { get_db_sqlite } from '../database/database.mjs';
 import { add_trips } from '../database/init_db.mjs';
 import { check_book_errors, check_header, check_login_error, check_register_communicate, check_title, check_user_reservation } from './tests_functions.mjs';
@@ -25,15 +26,22 @@ const not_enough_places = 'Brak miejsc';
 describe("Testy backend", async () => {
 
     const TIMEOUT = 10000;
-    const driver = new Builder().withCapabilities(Capabilities.firefox()).build();
+    const driver = new Builder().withCapabilities(Capabilities.firefox())
+        .setFirefoxOptions(new firefox.Options().headless().windowSize({
+          width: 1920,
+          height: 1080,
+        })).build();
     const website = 'http://localhost:2000';
     let db;
     let app;
 
     before(async function () {
+        // await driver
+        //   .manage()
+        //   .setTimeouts({ implicit: TIMEOUT, pageLoad: TIMEOUT, script: TIMEOUT });
         await driver
-          .manage()
-          .setTimeouts({ implicit: TIMEOUT, pageLoad: TIMEOUT, script: TIMEOUT });
+        .manage()
+        .setTimeouts({ implicit: TIMEOUT, pageLoad: TIMEOUT, script: TIMEOUT });
         
         db = await get_db_sqlite();
         add_trips(db);  
@@ -41,13 +49,7 @@ describe("Testy backend", async () => {
     });
 
     it("uruchomienie strony glownej", async function() {
-        await driver.get(website);
-        await check_title(driver);  // sprawdzanie tytulu
-        await check_header(driver, 1, website); // sprawdzanie poprawnosci naglowka 
-        
-        // sprawdzanie ilosci wycieczek
-        let trips =  await driver.findElements(By.className("trip"));
-        equal(trips.length, 3); // sprawdzenie ilosci wycieczek
+    
     });
 
     it("wycieczki", async function() {
