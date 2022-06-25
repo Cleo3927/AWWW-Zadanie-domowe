@@ -1,17 +1,30 @@
-import { promises as fsp } from "fs";
-import { equal, notEqual } from "assert";
+import { equal } from "assert";
 import { start_server } from "../app.mjs";
 import { Builder, By, Capabilities, WebElement } from "selenium-webdriver";
-import { get_db_sqlite, get_db_postgres } from '../database/database.mjs';
+import { get_db_sqlite } from '../database/database.mjs';
 import { add_trips } from '../database/init_db.mjs';
-import { waitForDebugger } from "inspector";
 
+const empty_field = 'Please fill out this field.';
+const empty_number = 'Please enter a number.'; 
+const empty_box = 'Please check this box if you want to proceed.';
+const incorrect_email = 'Please enter an email address.'; 
+const incorrect_phone = 'Please match the requested format: Numer powinien składać się z 9 cyfr..'; 
+const less = 'Please select a value that is no less than 1.'; 
+const more = 'Please select a value that is no more than 4.';
+const incorrect_trip = 'Nie ma takiej wycieczki'; 
+const not_logged = 'Zaloguj się'
+const not_equal_passwords = 'Hasła nie są identyczne';
+const correct_register = 'Udało się zarejestrować';
+const email_exist = 'Taki mail już jest zarejestrowany';
+const incorrect_login = 'Błąd logowania';
+const not_enough_places = 'Brak miejsc';
 
 // funkcje pomocnicze do testowania
-async function check_header(driver, index) {
+async function check_header(driver, index, website) {
     let naglowek = await driver.findElement(By.tagName("header")).findElements(By.tagName('a')); // linki w menu
     
-    equal(naglowek.length, 8); // wyswietlaja sie wszystkie elementy
+    // wyswietlaja sie wszystkie elementy
+    equal(naglowek.length, 8); 
     
     // kolorowanie menu
     equal(await naglowek[index].getAttribute('style'), "color: red;");
@@ -32,48 +45,129 @@ async function check_header(driver, index) {
 }
 
 async function check_title(driver) {
-    await driver.get(website);
     const title = await driver.getTitle();
     equal(title, 'Wycieczka'); // sprawdzanie tytulu
 }
 
-// testy
+async function put_date_book(driver, date, box = false) {
+    let inputy = await driver.findElements(By.tagName('input'));
+    equal(await inputy.length, 7);
+    // resetowanie odpowiedzi
+    for (let i = 1; i < inputy.length - 1; i++) // first is id hidden, last is gdbr
+        await inputy[i].clear();
 
+    if (await inputy[inputy.length - 1].isSelected())
+        await inputy[inputy.length - 1].click();
+    
+    //ustawianie wartosci w polach
+    for (let i = 0; i < date.length; i++)
+        await inputy[i + 1].sendKeys(date[i]);
+    
+    if (box == true)
+        await inputy[inputy.length - 1].click();
+    
+    // wyslanie danych
+    await driver.findElement(By.tagName('button')).click();
+} 
+
+async function check_book_errors(driver, errors) {
+    let inputy = await driver.findElements(By.tagName('input'));
+    equal(await inputy.length, 7);
+    for (let i = 1; i < inputy.length; i++)
+        equal(await inputy[i].getAttribute('validationMessage'), errors[i - 1]); 
+}
+
+async function put_date_register(driver, date) {
+    let inputy = await driver.findElements(By.tagName('input'));
+    equal(await inputy.length, 5);
+    // resetowanie odpowiedzi
+    for (let i = 0; i < inputy.length; i++) 
+        await inputy[i].clear();
+
+    //ustawianie wartosci w polach
+    for (let i = 0; i < date.length; i++)
+        await inputy[i].sendKeys(date[i]);
+    
+    // wyslanie danych
+    await driver.findElement(By.tagName('button')).click();
+}
+
+async function check_register_communicate(driver, error) {
+    let info = await driver.findElement(By.id('trip_informations')).findElement(By.tagName('div'));
+    equal(await info.getText(), error);
+}
+
+async function put_date_login(driver, date) {
+    let inputy = await driver.findElements(By.tagName('input'));
+    equal(await inputy.length, 2);
+    // resetowanie odpowiedzi
+    for (let i = 0; i < inputy.length; i++) 
+        await inputy[i].clear();
+
+    //ustawianie wartosci w polach
+    for (let i = 0; i < date.length; i++)
+        await inputy[i].sendKeys(date[i]);
+    
+    // wyslanie danych
+    await driver.findElement(By.tagName('button')).click();
+}
+
+async function check_login_error(driver, error) {
+    let komunikat = await driver.findElement(By.tagName('div'));
+    equal(await komunikat.getText(), error);
+}
+
+async function check_user_reservation(driver, titles, reservations) {
+    // sprawdza zawartosc nagłówków rezerwacji
+    let tytuly = await driver.findElements(By.tagName('h1'));
+    equal(await tytuly.length, titles.length);
+    for (let i = 0; i < tytuly.length; i++)
+        equal(await tytuly[i].getText(), titles[i]);
+    
+    if (reservations.length > 0) {
+        let zawartosc = await driver.findElements(By.tagName('p'));
+
+        equal(await zawartosc.length, reservations.length);
+    
+        for (let i = 0; i < zawartosc.length; i++)
+            equal(await zawartosc[i].getText(), reservations[i]);
+    }
+}
+
+// testy
 describe("Testy frontend", async () => {
-    get_db_postgres((db) => {
-        async function add() {
-            add_trips(db);  
-        };
-        add();
-        start_server(db);
-    });
 
     const TIMEOUT = 10000;
     const driver = new Builder().withCapabilities(Capabilities.firefox()).build();
     const website = 'http://localhost:2000';
+    let db;
+    let app;
 
     before(async function () {
         await driver
           .manage()
           .setTimeouts({ implicit: TIMEOUT, pageLoad: TIMEOUT, script: TIMEOUT });
-      });
+        
+        db = await get_db_sqlite();
+        add_trips(db);  
+        app = start_server(db);
+    });
 
     it("uruchomienie strony glownej", async function() {
-        check_title(driver);  // sprawdzanie tytulu
-        check_header(driver, 1); // sprawdzanie poprawnosci naglowka 
+        await driver.get(website);
+        await check_title(driver);  // sprawdzanie tytulu
+        await check_header(driver, 1, website); // sprawdzanie poprawnosci naglowka 
         
         // sprawdzanie ilosci wycieczek
-        await driver.get(website);
         let trips =  await driver.findElements(By.className("trip"));
         equal(trips.length, 3); // sprawdzenie ilosci wycieczek
     });
 
     it("wycieczki", async function() {
-        check_title(driver);  // sprawdzanie tytulu
-        check_header(driver, 2); // sprawdzanie poprawnosci naglowka 
-
         await driver.get(website + '/trip/0');
-        
+        await check_title(driver);  // sprawdzanie tytulu
+        await check_header(driver, 2, website); // sprawdzanie poprawnosci naglowka 
+
         // sprawdzanie czy to wycieczka 0
         let nazwa = await driver.findElement(By.tagName('h1'));
         equal(await nazwa.getText(), 'Wycieczka nad morze');
@@ -85,233 +179,138 @@ describe("Testy frontend", async () => {
     });
 
     it("wycieczki spoza zakresu", async function() {
-        check_title(driver);  // sprawdzanie tytulu
-        check_header(driver, 2); // sprawdzanie poprawnosci naglowka 
-        
         await driver.get(website + '/trip/-1');
+        await check_title(driver);  // sprawdzanie tytulu
+        await check_header(driver, 2, website); // sprawdzanie poprawnosci naglowka 
         let nazwa_minus = await driver.findElement(By.tagName('main')).findElement(By.tagName('h2'));
-        equal(await nazwa_minus.getText(), 'Nie ma takiej wycieczki');
+        equal(await nazwa_minus.getText(), incorrect_trip);
         
         await driver.get(website + '/trip/5');
+        await check_title(driver);  // sprawdzanie tytulu
+        await check_header(driver, 2, website); // sprawdzanie poprawnosci naglowka 
         let nazwa_plus = await driver.findElement(By.tagName('main')).findElement(By.tagName('h2'));
-        equal(await nazwa_plus.getText(), 'Nie ma takiej wycieczki');
-        
+        equal(await nazwa_plus.getText(), incorrect_trip); 
     });
 
     it("bookowanie nieprawidłowe pola", async function() {
         await driver.get(website + '/book/1');
-        check_title(driver);
-        check_header(driver, 3); // sprawdzanie poprawnosci naglowka 
+        await check_title(driver);
+        await check_header(driver, 3, website); // sprawdzanie poprawnosci naglowka 
 
-        await driver.findElement(By.tagName('button')).click();
-
-
-        let inputy = await driver.findElements(By.tagName('input'));
-        equal(await inputy.length, 7);
-        equal(await inputy[1].getAttribute('validationMessage'), 'Please fill out this field.'); // imie
-        equal(await inputy[2].getAttribute('validationMessage'), 'Please fill out this field.'); // nazwisko
-        equal(await inputy[3].getAttribute('validationMessage'), 'Please fill out this field.'); // numer 
-        equal(await inputy[4].getAttribute('validationMessage'), 'Please fill out this field.'); // mail 
-        equal(await inputy[5].getAttribute('validationMessage'), 'Please enter a number.'); // liczba osob
-        equal(await inputy[6].getAttribute('validationMessage'), 'Please check this box if you want to proceed.'); // kwadracik 
-
-        await driver.findElement(By.id('first_name')).sendKeys('Ala');
-        await driver.findElement(By.id('last_name')).sendKeys('MAkota');
+        // pusty formularz
+        await put_date_book(driver, ['', '', '', '', '', '']); // pusty 
+        await check_book_errors(driver, [empty_field, empty_field, empty_field, empty_field, empty_number, empty_box]);
 
         // sprawdzanie numeru
-        await driver.findElement(By.id('phone')).sendKeys('1234');
-        await driver.findElement(By.tagName('button')).click();
-        inputy = await driver.findElements(By.tagName('input'));
-        equal(await inputy[3].getAttribute('validationMessage'), 'Please match the requested format: Numer powinien składać się z 9 cyfr..'); // numer 
-        await driver.findElement(By.id('phone')).clear();
-        await driver.findElement(By.id('phone')).sendKeys('123456789');
-        await driver.findElement(By.tagName('button')).click();
-        inputy = await driver.findElements(By.tagName('input'));
-        equal(await inputy[3].getAttribute('validationMessage'), ''); // numer 
-        
+        await put_date_book(driver, ['Ala', 'Makota', '1234']);
+        await check_book_errors(driver, ['', '', incorrect_phone, empty_field, empty_number, empty_box]);
+        await put_date_book(driver, ['Ala', 'Makota', '123456789'], false);
+        await check_book_errors(driver, ['', '', '', empty_field, empty_number, empty_box]);
+
         // sprawdzanie maila
-        await driver.findElement(By.id('email')).sendKeys('test');
-        await driver.findElement(By.tagName('button')).click();
-        inputy = await driver.findElements(By.tagName('input'));
-        equal(await inputy[4].getAttribute('validationMessage'), 'Please enter an email address.'); // mail 
-        await driver.findElement(By.id('email')).clear();
-        await driver.findElement(By.id('email')).sendKeys('test@wp.pl');
-        await driver.findElement(By.tagName('button')).click();
-        inputy = await driver.findElements(By.tagName('input'));
-        equal(await inputy[4].getAttribute('validationMessage'), ''); // mail 
-
+        await put_date_book(driver, ['Ala', 'Makota', '123456789', 'test']);
+        await check_book_errors(driver, ['', '', '', incorrect_email, empty_number, empty_box]);
+        await put_date_book(driver, ['Ala', 'Makota', '123456789', 'test@wp.pl'], false);
+        await check_book_errors(driver, ['', '', '', '', empty_number, empty_box]);
+        
         // sprawdzanie osob
-        await driver.findElement(By.id('n_people')).sendKeys('-1');
-        await driver.findElement(By.tagName('button')).click();
-        inputy = await driver.findElements(By.tagName('input'));
-        equal(await inputy[5].getAttribute('validationMessage'), 'Please select a value that is no less than 1.'); // miejsca 
-        await driver.findElement(By.id('n_people')).clear();
-        await driver.findElement(By.id('n_people')).sendKeys('5');
-        await driver.findElement(By.tagName('button')).click();
-        inputy = await driver.findElements(By.tagName('input'));
-        equal(await inputy[5].getAttribute('validationMessage'), 'Please select a value that is no more than 4.'); // miejsca
-        await driver.findElement(By.id('n_people')).clear();
-        await driver.findElement(By.id('n_people')).sendKeys('2');
-        await driver.findElement(By.tagName('button')).click();
-        inputy = await driver.findElements(By.tagName('input'));
-        equal(await inputy[5].getAttribute('validationMessage'), ''); // miejsca
-
-        await driver.findElement(By.id('gdpr_permission')).click();
-        await driver.findElement(By.tagName('button')).click();
+        await put_date_book(driver, ['Ala', 'Makota', '123456789', 'test@wp.pl', '-1']);
+        await check_book_errors(driver, ['', '', '', '', less, empty_box]);
+        await put_date_book(driver, ['Ala', 'Makota', '123456789', 'test@wp.pl', '5']);
+        await check_book_errors(driver, ['', '', '', '', more, empty_box]);
+        await put_date_book(driver, ['Ala', 'Makota', '123456789', 'test@wp.pl', '2']);
+        await check_book_errors(driver, ['', '', '', '', '', empty_box]);
+        
+        // wszystko uzupelnione
+        await put_date_book(driver, ['Ala', 'Makota', '123456789', 'test@wp.pl', '2'], true);
 
         // brak zalogowania
         let info = await driver.findElement(By.id('trip_informations')).findElement(By.tagName('div'));
-        equal(await info.getText(), "Zaloguj się");
+        equal(await info.getText(), not_logged);
     });
 
     it("rejestracja 2 razy", async function() {
+        // sprawdzanie poprawnosci naglowka 
         await driver.get(website + '/register/');
-        check_title(driver);
-        check_header(driver, 7); // sprawdzanie poprawnosci naglowka 
+        await check_title(driver);
+        await check_header(driver, 7, website); 
 
-        // sprawdzanie danych - formularz identyczny co w book - sprawdzanie hasla      
-        await driver.findElement(By.id('first_name')).sendKeys('Ala');
-        await driver.findElement(By.id('last_name')).sendKeys('Makota');
-        await driver.findElement(By.id('email')).sendKeys('test@wp.pl');
-        await driver.findElement(By.id('pass')).sendKeys('haslo12345');
-        await driver.findElement(By.id('confpass')).sendKeys('haslo1234');
-        await driver.findElement(By.tagName('button')).click();
+        // sprawdzanie rejestracji - niezgodne hasla 
+        await put_date_register(driver, ['Ala', 'Makota', 'test@wp.pl', 'haslo12345', 'haslo1234']);
+        await check_register_communicate(driver, not_equal_passwords); 
         
-        let komunikat = await driver.findElement(By.tagName('div'));
-        equal(await komunikat.getText(), 'Hasła nie są identyczne');
-        
-        // sprawdzanie czy teraz jest poprawnie
-        await driver.findElement(By.id('first_name')).clear();
-        await driver.findElement(By.id('first_name')).sendKeys('Ala');
-        await driver.findElement(By.id('last_name')).clear();
-        await driver.findElement(By.id('last_name')).sendKeys('Makota');
-        await driver.findElement(By.id('email')).clear();
-        await driver.findElement(By.id('email')).sendKeys('test@wp.pl');
-        await driver.findElement(By.id('pass')).clear();
-        await driver.findElement(By.id('pass')).sendKeys('haslo12345');
-        await driver.findElement(By.id('confpass')).clear();
-        await driver.findElement(By.id('confpass')).sendKeys('haslo12345');
-        await driver.findElement(By.tagName('button')).click();
-        
-        komunikat = await driver.findElement(By.tagName('div'));
-        equal(await komunikat.getText(), 'Udało się zarejestrować');
+        // sprawdzanie rejestracji - poprawne
+        await put_date_register(driver, ['Ala', 'Makota', 'test@wp.pl', 'haslo12345', 'haslo12345']);
+        await check_register_communicate(driver, correct_register); 
         
         // sprawdzanie drugiej rejestracji - blad
-        await driver.findElement(By.id('first_name')).sendKeys('Ala');
-        await driver.findElement(By.id('last_name')).sendKeys('Makota');
-        await driver.findElement(By.id('email')).sendKeys('test@wp.pl');
-        await driver.findElement(By.id('pass')).sendKeys('haslo12345');
-        await driver.findElement(By.id('confpass')).sendKeys('haslo12345');
-        await driver.findElement(By.tagName('button')).click();
-        
-        komunikat = await driver.findElement(By.tagName('div'));
-        equal(await komunikat.getText(), 'Taki mail już jest zarejestrowany');
+        await put_date_register(driver, ['Ala', 'Makota', 'test@wp.pl', 'haslo12345', 'haslo12345']);
+        await check_register_communicate(driver, email_exist); 
     });
 
     it("logowanie", async function() {
-        check_title(driver);
-        check_header(driver, 4); // sprawdzanie poprawnosci naglowka 
-        // formularz ma te same metody, co bookowanie
+        // sprawdzanie poprawnosci naglowka 
+        await driver.get(website + '/login/');
+        await check_title(driver);
+        await check_header(driver, 4, website); 
 
         // zly email 
-        await driver.get(website + '/login/');
-        await driver.findElement(By.id('email')).sendKeys('test2@wp.pl');
-        await driver.findElement(By.id('pass')).sendKeys('haslo12345');
-        await driver.findElement(By.tagName('button')).click();
-        let komunikat = await driver.findElement(By.tagName('div'));
-        equal(await komunikat.getText(), 'Błąd logowania');
+        await put_date_login(driver, ['test2@wp.pl', 'haslo12345']);
+        await check_login_error(driver, incorrect_login);
         
         // zle haslo 
-        await driver.findElement(By.id('email')).sendKeys('test@wp.pl');
-        await driver.findElement(By.id('pass')).sendKeys('haslo123');
-        await driver.findElement(By.tagName('button')).click();
-        komunikat = await driver.findElement(By.tagName('div'));
-        equal(await komunikat.getText(), 'Błąd logowania');
+        await put_date_login(driver, ['test@wp.pl', 'haslo123']);
+        await check_login_error(driver, incorrect_login);
         
         // poprawne logowanie
-        await driver.findElement(By.id('email')).sendKeys('test@wp.pl');
-        await driver.findElement(By.id('pass')).sendKeys('haslo12345');
-        await driver.findElement(By.tagName('button')).click();
+        await put_date_login(driver, ['test@wp.pl', 'haslo12345']);
         equal(await driver.getCurrentUrl(), website + '/mainuser/');
 
         // puste rezerwacje
-        let rezerwacje = await driver.findElements(By.tagName('h1'));
-        equal(await rezerwacje[0].getText(), "brak rezerwacji");
+        await check_user_reservation(driver, ['brak rezerwacji'], []);
     });
     
     it("bookowanie zalogowanie poprawne", async function() {
+        // sprawdzanie poprawnosci naglowka 
         await driver.get(website + '/book/1');
-        check_title(driver);
-        check_header(driver, 3); // sprawdzanie poprawnosci naglowka 
+        await check_title(driver);
+        await check_header(driver, 3, website); 
 
         // poprawne bookowanie
-        await driver.get(website + '/book/1');
-        await driver.findElement(By.id('first_name')).sendKeys('Ala');
-        await driver.findElement(By.id('last_name')).sendKeys('Makota');
-        await driver.findElement(By.id('phone')).sendKeys('123456789');
-        await driver.findElement(By.id('email')).sendKeys('test@wp.pl');
-        await driver.findElement(By.id('n_people')).sendKeys('2');
-        await driver.findElement(By.id('gdpr_permission')).click();
-        await driver.findElement(By.tagName('button')).click();
+        await put_date_book(driver, ['Ala', 'Makota', '123456789', 'test@wp.pl', '2'], true);
         equal(await driver.getCurrentUrl(), website + '/trip/1');
         
         // sprawdzanie rejestracji
         await driver.get(website + '/mainuser/');
-        let tytuly = await driver.findElements(By.tagName('h1'));
-        let zawartosc = await driver.findElements(By.tagName('p'));
-        equal(await tytuly.length, 1);
-        equal(await tytuly[0].getText(), "rezerwacja nr 0 na wycieczkę Wycieczka w góry");
-        equal(await zawartosc[0].getText(), "Rezerwujący: Ala Makota");
-        equal(await zawartosc[1].getText(), "Miejsca: 2");
+        await check_user_reservation(driver, ['rezerwacja nr 0 na wycieczkę Wycieczka w góry'], ['Rezerwujący: Ala Makota', 'Miejsca: 2']);
     });
     
     it("bookowanie brak miejsc", async function() {
         // poprawne bookowanie, ale brak miejsc
         await driver.get(website + '/book/1');
-        await driver.findElement(By.id('first_name')).sendKeys('Ala');
-        await driver.findElement(By.id('last_name')).sendKeys('Makota');
-        await driver.findElement(By.id('phone')).sendKeys('123456789');
-        await driver.findElement(By.id('email')).sendKeys('test@wp.pl');
-        await driver.findElement(By.id('n_people')).sendKeys('3');
-        await driver.findElement(By.id('gdpr_permission')).click();
-        await driver.findElement(By.tagName('button')).click();
-        
+        await put_date_book(driver, ['Ala', 'Makota', '123456789', 'test@wp.pl', '3'], true);
         equal(await driver.getCurrentUrl(), website + '/book/1');
         let info = await driver.findElement(By.id('trip_informations')).findElement(By.tagName('div'));
-        equal(await info.getText(), "Brak miejsc");
-
+        equal(await info.getText(), not_enough_places);
     });
 
-    it("bookowanie 2 poprawne", async function() {
+    it("bookowanie druga poprawna", async function() {
         // 2 rejestracja poprawna
         await driver.get(website + '/book/0');
-        await driver.findElement(By.id('first_name')).sendKeys('Ala');
-        await driver.findElement(By.id('last_name')).sendKeys('Makota');
-        await driver.findElement(By.id('phone')).sendKeys('123456789');
-        await driver.findElement(By.id('email')).sendKeys('test@wp.pl');
-        await driver.findElement(By.id('n_people')).sendKeys('3');
-        await driver.findElement(By.id('gdpr_permission')).click();
-        await driver.findElement(By.tagName('button')).click();
-        
+        await put_date_book(driver, ['Ala', 'Makota', '123456789', 'test@wp.pl', '3'], true);
         equal(await driver.getCurrentUrl(), website + '/trip/0');
         
         // sprawdzanie rejestracji
         await driver.get(website + '/mainuser/');
-        let tytuly = await driver.findElements(By.tagName('h1'));
-        let zawartosc = await driver.findElements(By.tagName('p'));
-        equal(await tytuly.length, 2);
-        equal(await tytuly[0].getText(), "rezerwacja nr 0 na wycieczkę Wycieczka w góry");
-        equal(await tytuly[1].getText(), "rezerwacja nr 1 na wycieczkę Wycieczka nad morze");
-        equal(await zawartosc[0].getText(), "Rezerwujący: Ala Makota");
-        equal(await zawartosc[1].getText(), "Miejsca: 2");
-        equal(await zawartosc[2].getText(), "Rezerwujący: Ala Makota");
-        equal(await zawartosc[3].getText(), "Miejsca: 3");
+        await check_user_reservation(driver, ['rezerwacja nr 0 na wycieczkę Wycieczka nad morze', 'rezerwacja nr 1 na wycieczkę Wycieczka w góry'], 
+            ['Rezerwujący: Ala Makota', 'Miejsca: 3', 'Rezerwujący: Ala Makota', 'Miejsca: 2']);
     });
 
     it("wyloguj i sprawdz liste rejestracji", async function() {
+        // sprawdzanie poprawnosci naglowka 
         await driver.get(website + '/logout/');
-        check_title(driver);
-        check_header(driver, 6); // sprawdzanie poprawnosci naglowka 
+        await check_title(driver);
+        await check_header(driver, 6, website); 
         
         await driver.get(website + '/logout/');
         await driver.findElement(By.tagName('button')).click();
@@ -321,9 +320,11 @@ describe("Testy frontend", async () => {
 
         // puste rezerwacje
         await driver.get(website + '/mainuser/');
-        let rezerwacje = await driver.findElements(By.tagName('h1'));
-        equal(await rezerwacje[0].getText(), "brak rezerwacji");
+        await check_user_reservation(driver, ['brak rezerwacji'], []);
     });
 
-    after(() => driver.quit());
+    after(() => {
+        driver.quit();
+        app.close();
+    });
 });

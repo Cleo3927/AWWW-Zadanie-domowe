@@ -1,7 +1,7 @@
 import { Sequelize, DataTypes } from 'sequelize';
 
 
-export const get_db_sqlite = async (logging = true) => {
+export const get_db_sqlite = async (logging = false) => {
     const sequelize = new Sequelize("sqlite::memory:", { logging });
     let db = {};
     db.sequelize = sequelize;
@@ -27,8 +27,7 @@ export const get_db_postgres = async () => {
     db.Zgloszenia = create_zgloszenia(db.sequelize);
     db.User = create_user(db.sequelize);
     
-    // await sequelize.sync();
-    await db.sequelize.sync({force: true});
+    await db.sequelize.sync();
     
     return db;
 }
