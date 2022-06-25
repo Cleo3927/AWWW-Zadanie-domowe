@@ -36,9 +36,6 @@ describe("Testy backend", async () => {
     let app;
 
     before(async function () {
-        // await driver
-        //   .manage()
-        //   .setTimeouts({ implicit: TIMEOUT, pageLoad: TIMEOUT, script: TIMEOUT });
         await driver
         .manage()
         .setTimeouts({ implicit: TIMEOUT, pageLoad: TIMEOUT, script: TIMEOUT });
