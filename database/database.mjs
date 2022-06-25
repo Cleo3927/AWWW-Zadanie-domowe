@@ -34,8 +34,8 @@ export const get_db_postgres = async () => {
 
 function create_wycieczki(sequelize) {
     const Wycieczki = sequelize.define('wycieczki', {
-    id: {type: DataTypes.INTEGER, unique: true, primaryKey: true},
-    tytul:  {type: DataTypes.STRING, unique: true, allowNull: false}, 
+    id: {type: DataTypes.INTEGER, unique: true, primaryKey: true, allowNull: false},
+    tytul:  {type: DataTypes.STRING, allowNull: false}, 
     miejsca: {type: DataTypes.INTEGER, allowNull: false, validate: { min: 0 } },
     zdjecie: {type: DataTypes.STRING, allowNull: false},
     opis: {type: DataTypes.STRING, allowNull: false},
@@ -54,9 +54,9 @@ function create_zgloszenia(sequelize) {
         imie: {type: DataTypes.STRING, allowNull: false}, 
         nazwisko: {type: DataTypes.STRING, allowNull: false}, 
         telefon: {type: DataTypes.STRING, allowNull: false, validate: { len: [9, 9] } }, 
-        email: {type: DataTypes.STRING, validate: { isEmail: true } },
-        ilosc: {type: DataTypes.STRING, validate: { min: 1 } }, 
-        id_wycieczki: {type: DataTypes.INTEGER, primaryKey: true}
+        email: {type: DataTypes.STRING, validate: { isEmail: true }, allowNull: false },
+        ilosc: {type: DataTypes.STRING, validate: { min: 1 }, allowNull: false }, 
+        id_wycieczki: {type: DataTypes.INTEGER, allowNull: false}
     }, {
         timestamps: false,
         freezeTableName: true,
@@ -67,10 +67,9 @@ function create_zgloszenia(sequelize) {
 
 function create_user(sequelize) {
     const User = sequelize.define("user", {
-        id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true, },
         imie: { type: DataTypes.STRING, allowNull: false, },
         nazwisko: { type: DataTypes.STRING, allowNull: false, },
-        email: { type: DataTypes.STRING, allowNull: false, unique: true, },
+        email: { type: DataTypes.STRING, allowNull: false, unique: true, primaryKey: true },
         haslo: { type: DataTypes.STRING, allowNull: false, },
     }, {
         timestamps: false,
